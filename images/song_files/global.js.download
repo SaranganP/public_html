@@ -1,0 +1,781 @@
+// JavaScript Document
+
+// UI code for the WPI Canvas Theme
+
+/**
+ * Canvas API helper function that extracts the URL for the next page from the 'link' header in the response.
+ *
+ * @param {Response} response - The response object from which to extract the 'link' header.
+ * @returns {string|null} The URL for the next page if it exists, otherwise null.
+ */
+function getNextUrlCanvas(response) {
+    const link = response.headers.get("link");
+    if (!link) {
+        return null;
+    }
+
+    const nextLink = link
+        .split(",")
+        .find((link) => link.includes('rel="next"'))
+        ?.split(";")[0]
+        .replace("<", "")
+        .replace(">", "");
+
+    return nextLink || null;
+}
+
+/**
+ * Polls for an element matching the given selector within a specified node.
+ * @param {string} selector - The CSS selector to match the element.
+ * @param {HTMLElement} [node=document] - The node to search within. Defaults to the document.
+ * @param {number} [timeout=20000] - The maximum time (in milliseconds) to wait for the element.
+ * @param {number} [pollingInterval=50] - The interval (in milliseconds) between each poll attempt.
+ * @returns {Promise<HTMLElement>} - A promise that resolves with the first matching element, or rejects with an error if the timeout is reached.
+ */
+async function pollForEl(selector, node = document, timeout = 20000, pollingInterval = 50) {
+    const startTime = Date.now();
+
+    const checkForElement = (resolve, reject) => {
+        const element = node.querySelector(selector);
+        if (element) {
+            resolve(element);
+        } else if (Date.now() - startTime > timeout) {
+            reject(new Error("Timeout reached waiting for element"));
+        } else {
+            setTimeout(checkForElement, pollingInterval, resolve, reject);
+        }
+    };
+
+    return new Promise((resolve, reject) => {
+        checkForElement(resolve, reject);
+    });
+}
+
+if (location.pathname.match(/\/courses(.*)/)) {
+    // Remove the "greyed-out" look of the Publish/Unpublish buttons
+    $("button.ui-button.disabled.btn-published").css("opacity", 1);
+    $("button.ui-button.btn-unpublish.disabled").css("opacity", 1);
+
+    var context = window.ENV.context_asset_string; // this pulls the currently context (a course) from Canvas' environment data
+    var start_date = "2016-01-01"; // beginning of the year
+    var end_date = new Date().toISOString(); // today
+
+    $.get(
+        "/api/v1/announcements?context_codes[]=" + context + "&start_date=" + start_date + "&end_date=" + end_date
+    ).done(function (response) {
+        var announcementLink = $(".section a.announcements"),
+            // the api returns an array of discussions. we will filter it to keep only the 'read_state = unread' ones, and count
+            unreadAnnouncementCount = response.filter(function (discussion) {
+                return discussion.read_state === "unread";
+            }).length;
+
+        if (unreadAnnouncementCount) {
+            announcementLink.css("position", "relative"); // to allow the badge to be positioned properly
+            announcementLink.append(
+                '<b class="nav-badge" style="position: absolute;">' + unreadAnnouncementCount + "</b>"
+            );
+        }
+    });
+}
+
+if (location.pathname.match(/\/courses+$/)) {
+    const newNode = document.createElement("span");
+    newNode.innerHTML = "Toggle the Favorites Stars beside courses to choose what goes on your Dashboard";
+    const parentNode = $(".ic-Action-header.content--hasMarginTop");
+    const refNode = $(".ic-Action-header__Secondary");
+    parentNode[0].insertBefore(newNode, refNode[0]);
+}
+
+INST.maxVisibleEditorButtons = 12;
+
+function hideRecordButton() {
+    const elements = document.getElementsByClassName("mce-i-video");
+    for (var i = 0; i < elements.length; i++) {
+        elements[i].parentNode.style.display = "none";
+    }
+}
+hideRecordButton();
+
+/* Display a message when someone tries to submit a file without attachment */
+// var matches = ;
+if (location.pathname.match(/\/assignments(.*)/)) {
+    document.getElementById("submit_file_button")?.addEventListener("click", () => {
+        const fileInputs = document.querySelectorAll(".input-file");
+
+        let hasFile = false;
+        fileInputs.forEach((el) => {
+            if (el.files.length > 0) hasFile = true;
+        });
+
+        if (hasFile) return;
+
+        fileInputs.forEach((el) => {
+            el.style.backgroundColor = "yellow";
+            el.classList.add("err");
+        });
+        alert('No File Added! Attach a file to submit a "File Upload" assignment.');
+    });
+}
+
+/* Remove muted assignment groups from grades */
+var matches = location.pathname.match(/\/grades(.*)/);
+if (matches) {
+    var rows = $("#grades_summary").children("tbody").children("tr");
+    for (let i = 0; i < rows.length; i++) {
+        var isMuted = $(rows[i]).attr("data-muted");
+        if (rows[i].hasAttribute("data-muted")) {
+            if (isMuted != "false") {
+                $(rows[i]).hide();
+                console.log(rows[i]);
+            }
+        }
+    }
+}
+
+/* Add an email button with course home page */
+matches = location.pathname.match(/\/courses\/[0-9]+$/);
+if (matches) {
+    var str = window.location.href.split("/");
+    var CN = str[str.length - 1];
+    var node = document.createElement("div");
+    node.className = "course-options";
+    var lnk = document.createElement("a");
+    if ($("button.ui-button.btn-unpublish.disabled").length) {
+        lnk.innerHTML = "Publish this course to send messages";
+    } else {
+        lnk.innerHTML = "Course Inbox";
+    }
+    lnk.className = "btn button-sidebar-wide";
+    lnk.setAttribute("href", "https://canvas.wpi.edu/conversations#filter=type=inbox&course=course_" + CN);
+    var icn = document.createElement("i");
+    icn.className = "icon-email icon-Line";
+    lnk.prepend(icn);
+    var spn = document.createElement("span");
+    spn.setAttribute("style", "margin-left:1em");
+    icn.append(spn);
+    node.append(lnk);
+    $("div.course-options")[0].prepend(node);
+}
+
+async function fetchMyCourses() {
+    let reqUrl = "/api/v1/courses?per_page=100";
+
+    const courseData = [];
+
+    // To prevent infinite loops, we'll only fetch up to 50 pages of courses
+    for (let i = 0; i < 50; i++) {
+        const res = await fetch(reqUrl);
+        const data = await res.json();
+
+        if (!data || data.length === 0) {
+            break;
+        }
+
+        courseData.push(...data);
+
+        const nextUrl = getNextUrlCanvas(res);
+        if (!nextUrl) {
+            break;
+        }
+
+        reqUrl = nextUrl;
+    }
+
+    return courseData;
+}
+
+async function handleCourseSelectInject(myCourseMap) {
+    const observer = new MutationObserver(async (mutationsList) => {
+        const menuOpenMutation = mutationsList.some((mutation) => mutation.attributeName === "aria-expanded");
+        const valueMutation = mutationsList.some((mutation) => mutation.attributeName === "value");
+
+        if (!menuOpenMutation && !valueMutation) {
+            return;
+        }
+
+        const { target: hiddenInput } = mutationsList[0];
+
+        if (!hiddenInput || !(hiddenInput instanceof HTMLElement)) {
+            throw new Error("Hidden input not found");
+        }
+
+        const menuOpen = hiddenInput.getAttribute("aria-expanded") === "true";
+
+        if (!menuOpen) {
+            return;
+        }
+
+        const selectId = hiddenInput.getAttribute("aria-controls");
+
+        if (!selectId) {
+            return;
+        }
+
+        const courseSelect = await pollForEl(`#${selectId}`);
+
+        const courseLabels = courseSelect.querySelectorAll('[id^="course_"]');
+
+        if (courseLabels.length === 0) {
+            return;
+        }
+
+        for (const label of courseLabels) {
+            const courseId = label.id.split("_")[1];
+            const course = myCourseMap.get(courseId);
+
+            if (!course || !course?.course_code) {
+                continue;
+            }
+
+            label.innerHTML = String(course.course_code);
+        }
+    });
+
+    // Poll for the course select input and observe changes
+
+    const courseSelectInput = await pollForEl('[data-testid="course-select"]');
+
+    observer.observe(courseSelectInput, { attributes: true });
+
+    // Poll for the compose button and attach the observer when clicked
+
+    const composeBtn = await pollForEl("[data-testid='inbox-settings-in-header'] button:has(svg[name='IconCompose'])");
+
+    composeBtn.addEventListener("click", async () => {
+        const courseSelectInput = await pollForEl('[aria-label="Compose Message"] [data-testid="course-select-modal"]');
+
+        observer.observe(courseSelectInput, { attributes: true });
+
+        const closeBtn = await pollForEl('[aria-label="Compose Message"] span[class$="-closeButton"] > button');
+
+        closeBtn.addEventListener("click", () => {
+            observer.disconnect();
+        });
+    });
+}
+
+async function handleCourseAddressBookInject(myCourseMap) {
+    const addressBookInputParentSpan = await pollForEl(
+        'span span:nth-child(3):has(input[data-testid="message-list-actions-address-book-input"])'
+    );
+
+    let isUpdating = false;
+
+    let menuContentObserver, adressBookMenu;
+
+    const idPrefix = "address-book-menu-item-course_";
+    const idSuffix = "-context";
+
+    menuContentObserver = new MutationObserver((mutationsList) => {
+        if (isUpdating) {
+            return;
+        }
+
+        if (!adressBookMenu) {
+            return;
+        }
+
+        // const start = performance.now();
+
+        isUpdating = true;
+
+        const testMutationList = mutationsList.filter(
+            (mutation) =>
+                mutation.addedNodes.length > 0 && mutation.target && mutation.target instanceof HTMLSpanElement
+        );
+
+        for (const mutation of testMutationList) {
+            if (mutation.addedNodes.length === 0) {
+                continue;
+            }
+
+            const { target = null } = mutation;
+
+            if (!target || !(target instanceof HTMLSpanElement)) {
+                continue;
+            }
+
+            const className = target.classList.item(0);
+
+            if (!className || !(className.startsWith("css-") && className.endsWith("-truncateText"))) {
+                continue;
+            }
+
+            const parentLi = target?.parentElement?.parentElement?.parentElement;
+
+            if (!parentLi || !(parentLi.id.startsWith(idPrefix) && parentLi.id.endsWith(idSuffix))) {
+                continue;
+            }
+
+            const courseIdStr = parentLi.id.slice(idPrefix.length, -idSuffix.length);
+            const courseCode = myCourseMap.get(courseIdStr);
+
+            if (!courseCode) {
+                continue;
+            }
+
+            const lastChild = target.lastChild;
+
+            if (!lastChild || lastChild.textContent === courseCode.course_code) {
+                continue;
+            }
+
+            target.lastChild.textContent = courseCode.course_code;
+        }
+
+        isUpdating = false;
+    });
+
+    const menuContainerObserver = new MutationObserver(async (mutationsList) => {
+        if (!mutationsList.some((mutation) => mutation.removedNodes.length > 0)) {
+            return;
+        }
+
+        menuContentObserver.disconnect();
+        adressBookMenu = null;
+    });
+
+    addressBookInputParentSpan.addEventListener("focusin", async () => {
+        adressBookMenu = await pollForEl('span:has([data-testid="address-book-popover"]) > span');
+
+        menuContentObserver.observe(adressBookMenu, { childList: true, subtree: true });
+        menuContainerObserver.observe(adressBookMenu.parentNode, { childList: true });
+    });
+}
+
+window.addEventListener("DOMContentLoaded", async () => {
+    if (!location.pathname.match(/\/conversations(.*)/)) return;
+
+    // Fetch the user's courses and create a map of course IDs to course objects
+
+    const myCourses = await fetchMyCourses();
+
+    const myCourseMap = new Map(myCourses.map((course) => [String(course.id), course]));
+
+    handleCourseSelectInject(myCourseMap);
+    handleCourseAddressBookInject(myCourseMap);
+});
+
+/**
+// @name        Global Nav - Custom Tray
+// @namespace   https://github.com/robert-carroll/ccsd-canvas
+// @author      Robert Carroll <carror@nv.ccsd.net>
+// 
+// Modified for WPI by jmonaco@wpi.edu
+ **/
+// Hide existing Arc Button
+$("div.menu-item__text:contains('Studio')").parent().hide();
+$(document).ready(function () {
+    ///* set tray title, icon, links and footer here *///
+    ///*  for user role based conditions see README  *///
+    var title = "Media Storage",
+        svg = "https://wp.wpi.edu/atc-ttl/files/2019/09/box.svg",
+        trayLinks = [
+            {
+                href: "https://canvas.wpi.edu/accounts/1/external_tools/1206?launch_type=global_navigation",
+                title: "Canvas Studio",
+                desc: 'Canvas-integrated videos for faculty/students that can be easily integrated with assignments and gradebook.</br><a href="https://community.canvaslms.com/community/answers/guides/studio-guide">User guide</a>',
+            },
+            {
+                href: "https://echo360.org",
+                title: "Echo360",
+                desc: '<a href="https://hub.wpi.edu/io/Echo-Capture-Request" target="_blank">Request Lecture Capture</a>: Record and store short and long-form lecture videos in class groupings or your own personal library.</br><a href="https://support.echo360.com/">The Echo360 online guide</a>',
+            },
+            {
+                href: "https://wpi0-my.sharepoint.com",
+                title: "OneDrive",
+                desc: "WPI cloud-based file storage for documents.",
+            },
+        ],
+        footer =
+            "Each of the above storage options have a variety of integrations with course assignments, pages, and modules. Email atc-ttl@wpi.edu for more information about each storage option.";
+
+    ///* options are above for convenience, continue if you like *///
+    var tidle = title.replace(/\s/, "_").toLowerCase(),
+        trayid = "global_nav_" + tidle + "_tray",
+        trayItems = "",
+        trayLinks = trayLinks.forEach(function (link) {
+            trayItems +=
+                '<li class="gcnt-list-item">' +
+                '<span class="gcnt-list-link-wrapper">' +
+                '<a target="_blank" rel="noopener" class="gcnt-list-link" href="' +
+                link.href +
+                '" role="button" tabindex="0">' +
+                link.title +
+                "</a>" +
+                "</span>";
+            // append link description if set
+            if (!!link.desc && link.desc.length > 1) {
+                trayItems += '<div class="gcnt-link-desc">' + link.desc + "</div>";
+            }
+            trayItems += "</li>";
+        }),
+        // tray html
+        tray =
+            '<span id="' +
+            trayid +
+            '" style="display: none;">' +
+            '<span class="global-nav-custom-tray gnct-easing">' +
+            '<span role="region" aria-label="Global navigation tray" class="Global-navigation-tray">' +
+            // begin close button
+            '<span class="gcnt-tray-close-wrapper">' +
+            '<button id="' +
+            trayid +
+            '_close" type="button" role="button" tabindex="0" class="gcnt-tray-close-btn" style="margin:0px;">' +
+            '<span class="gcnt-tray-close-svg-wrapper">' +
+            '<svg name="IconXSolid" viewBox="0 0 1920 1920" style="fill:currentColor;width:1em;height:1em;" width="1em" height="1em" aria-hidden="true" role="presentation" disabled="true">' +
+            '<g role="presentation"><svg version="1.1" viewBox="0 0 1920 1920">' +
+            '<path d="M1743.858.012L959.869 783.877 176.005.012 0 176.142l783.74 783.989L0 1743.87 176.005 1920l783.864-783.74L1743.858 1920l176.13-176.13-783.865-783.74 783.865-783.988z" stroke="none" stroke-width="1"></path>' +
+            '</svg></g></svg><span class="gcnt-tray-close-txt">Close</span></span></button></span>' +
+            // end of close button; begin tray header
+            '<div class="tray-with-space-for-global-nav">' +
+            '<div id="custom_' +
+            tidle +
+            '_tray" class="gnct-content-wrap">' +
+            '<h1 class="gcnt-tray-h1">' +
+            title +
+            "</h1><hr>" +
+            // end tray header; begin tray links list
+            '<ul class="gcnt-list">' +
+            trayItems;
+    // end tray links; if there is a footer, append it
+    if (footer.length > 1) {
+        tray += '<li class="gcnt-list-item"><hr></li>' + '<li class="gcnt-list-item">' + footer + "</li>";
+    }
+    // end tray html
+    tray += "</ul></div></div></span></span></span>";
+    // global nav icon
+    var main = $("#main"),
+        menu = $("#menu"),
+        icon = $("<li>", {
+            id: "global_nav_" + tidle + "_menu",
+            class: "ic-app-header__menu-list-item",
+            html:
+                '<a id="global_nav_' +
+                tidle +
+                '_link" href="javascript:void(0)" class="ic-app-header__menu-list-link">' +
+                '<div class="menu-item-icon-container" role="presentation"><span class="svg-' +
+                tidle +
+                '-holder"></span></div>' +
+                '<div class="menu-item__text">' +
+                title +
+                "</div></a>",
+        });
+    var node = document.createElement("img");
+    node.setAttribute("src", svg);
+
+    icon.find(".svg-" + tidle + "-holder").append(node);
+    /* 
+		* Not using dynamically loaded images bc our servers are not CORS
+		*
+        icon.find('.svg-'+tidle+'-holder').load(svg, function(){
+            var svg = $(this).find('svg')[0],
+                svg_id = 'global_nav_'+tidle+'_svg';
+                svg.setAttribute('id', svg_id);
+                svg.setAttribute('class', 'ic-icon-svg menu-item__icon ic-icon-svg--apps svg-icon-help ic-icon-svg-custom-tray')
+                $('#'+svg_id).find('path').removeAttr('fill')
+        });
+		*/
+    menu.append(icon);
+    main.append(tray);
+    // if you ventured this far, please note variable reassignment
+    icon = $("#global_nav_" + tidle + "_menu");
+    tray = $("#" + trayid);
+
+    // TODO: there's a delay in switching active icon states, sometimes both are active for a moment
+
+    // multiple ways for the tray to get closed, reduce and reuse
+    function close_gnct() {
+        menu.find("a").each(function () {
+            this.onmouseup = this.blur();
+        });
+        tray.find(".gnct-easing").animate(
+            {
+                left: "-200px",
+                opacity: 0.8,
+            },
+            300,
+            "linear",
+            function () {
+                tray.hide();
+                icon.removeClass("ic-app-header__menu-list-item--active");
+            }
+        );
+    }
+    icon.click(function () {
+        // if the tray is open, close it
+        if ($(this).hasClass("ic-app-header__menu-list-item--active")) {
+            close_gnct();
+            // else open the tray
+        } else {
+            menu.find("a").each(function () {
+                this.onmouseup = this.blur();
+            });
+            tray.show();
+            tray.find(".gnct-easing").animate(
+                {
+                    left: "0px",
+                    opacity: 1,
+                },
+                300,
+                "linear",
+                function () {
+                    $(".ic-app-header__menu-list-item").removeClass("ic-app-header__menu-list-item--active");
+                    icon.addClass("ic-app-header__menu-list-item--active");
+                }
+            );
+        }
+    });
+    // close the tray if the user clicks another nav icon that is not this one
+    $(".ic-app-header__menu-list-item")
+        .not(icon)
+        .click(function () {
+            close_gnct();
+        });
+    // close the tray
+    $("#" + trayid + "_close").click(function () {
+        close_gnct();
+    });
+});
+
+///////////////////////////////////////////////
+//// CODE FOR /courses/CLASSID/users/
+///////////////////////////////////////////////
+
+///////////////////////////////////////////////
+//// 9.23.2022 Added teacher inject, new users
+///////////////////////////////////////////////
+matchesCourse = location.pathname.match(/\/courses(.*)/);
+CN = -1;
+aList = [716, 32, 38, 37, 92, 21915, 11637, 713];
+myID = -1;
+isTeacher = false;
+var xmlhttp = new XMLHttpRequest();
+xmlhttp.onreadystatechange = function () {
+    if (this.readyState == 4 && this.status == 200) {
+        var json = this.responseText.replace("while(1);", "");
+        myID = JSON.parse(json).id;
+        if (matchesCourse) {
+            var path = location.pathname;
+            var matches = path.match(/(?!\/)\d+(?=(\/|$))/);
+            if (matches) {
+                CN = matches[0];
+                check_teacher(myID, CN);
+            }
+        }
+    }
+};
+xmlhttp.open("GET", "\\api/v1/users/self", true);
+xmlhttp.send();
+
+function check_teacher(id, cn) {
+    var path = location.pathname;
+    if (matchesCourse) {
+        var xmlhttp = new XMLHttpRequest();
+        xmlhttp.onreadystatechange = function () {
+            if (this.readyState == 4 && this.status == 200) {
+                var json = this.responseText.replace("while(1);", "");
+                var obj = JSON.parse(json);
+                if (obj.length > 0) {
+                    // Admins might be in a site with no enrollment
+                    var list = obj[0].enrollments;
+                    if (list.length > 0) {
+                        for (var i in list) {
+                            if (list[i].type == "TeacherEnrollment") isTeacher = true;
+                        }
+                    }
+                }
+                if (isTeacher || ~aList.indexOf(id)) dependent_on_teacher();
+            }
+        };
+        xmlhttp.open(
+            "GET",
+            "\\api/v1/courses/" + cn + "/search_users?search_term=" + id + "&include[]=enrollments",
+            true
+        );
+        xmlhttp.send();
+    }
+}
+
+function build_enrollment_list(obj) {
+    var list = [];
+    for (var i = 0; i < obj.length; ++i) {
+        var item = obj[i];
+        if (item.enrollments.length > 0) {
+            var id = item.id;
+            var eAddress = item.email;
+            var enrollmentList = item.enrollments;
+            //find most recent enrollment
+            var dates = [];
+            for (var j = 0; j < enrollmentList.length; ++j) {
+                var e = enrollmentList[j];
+                dates.push(e.created_at);
+            }
+            dates.sort();
+            var d = dates[dates.length - 1];
+            var listItem = {};
+            listItem.email = eAddress;
+            listItem.date = d;
+            listItem.id = id;
+            list.push(listItem);
+        }
+    }
+    //Put them in order by enrollment date, newest on top
+    list.sort(function (a, b) {
+        return a.date > b.date ? -1 : a.date < b.date ? 1 : 0;
+    });
+    return list;
+}
+
+function get_this_week(list) {
+    var compareDate = new Date();
+    var day = compareDate.getDay(); // Get current day number
+    compareDate.setHours(compareDate.getHours() - 24 * day); // Adjust
+    compareDate.setHours(0, 0, 0, 0); // To midnight
+    compareDate = compareDate.toISOString();
+    var i = 0;
+    while (i < list.length) {
+        var item = list[i];
+        if (item.date < compareDate) {
+            break;
+        } else {
+            ++i;
+        }
+    }
+    if (i > 0) {
+        list.splice(i, list.length - 1);
+        return list;
+    } else {
+        return [];
+    }
+}
+
+function user_page_inject(list) {
+    if (list.length > 0 && list.length < 100) {
+        var div = {
+            id: "new-student-alert",
+            title: list.length + " students have joined the class this week!",
+        };
+        jQuery("<div>", div).insertAfter(".ic-Action-header");
+        $("#new-student-alert").click(function () {
+            $("#new-student-list").toggle();
+        });
+        $("#new-student-alert").html('<a href="#">' + list.length + " students have joined the class this week!");
+
+        var emailList = "<ul>";
+        for (var i in list) emailList += "<li>" + list[i].email + "</li>";
+        emailList += "</ul>";
+
+        var listDiv = {
+            id: "new-student-list",
+            style: "display:none",
+            text: "Success",
+        };
+        jQuery("<div>", listDiv).insertAfter("#new-student-alert");
+        $("#new-student-list").html(emailList);
+    }
+}
+
+// Elements which should only present if the user is a course teacher go here.
+// Bear in mind that this is a user-side script; no administrative data, api keys,
+// etc should be in here, since it's tricial for a user to read or to cause this
+// function to execute. It's provided solely to improve user experience in cases where
+// api data relevant to the teacher can be displayed.
+function dependent_on_teacher() {
+    // Initiate process of counting new users this week
+    var matches = location.pathname.match(/\/courses(.*)\/users/);
+    var xmlhttp = new XMLHttpRequest();
+    xmlhttp.onreadystatechange = function () {
+        if (this.readyState == 4 && this.status == 200) {
+            // Once the courses JSON loads, parse to objects
+            var json = this.responseText.replace("while(1);", "");
+            myEnrollmentObj = JSON.parse(json);
+            user_page_inject(get_this_week(build_enrollment_list(myEnrollmentObj)));
+        }
+    };
+    xmlhttp.open(
+        "GET",
+        "\\api/v1/courses/" + CN + "/users?enrollment_type[]=student&include[]=enrollments&per_page=100",
+        true
+    );
+    xmlhttp.send();
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
+    if (!location.pathname.match(/\/profile\/settings$/)) return;
+
+    const settingsForm = await pollForEl("form");
+    if (!settingsForm) return;
+
+    const instructionsDiv = document.createElement("div");
+    instructionsDiv.style.marginBottom = "20px";
+    instructionsDiv.innerHTML = `<h2>Name Pronunciation Recording</h2>
+    <p>
+        Instructions for recording your name pronunciation are available
+        <a href="https://hub.wpi.edu/article/1199/workday-name-pronunciation" target="_blank">here</a>
+    </p>`;
+
+    settingsForm.after(instructionsDiv);
+});
+
+// Remove Teacher button from the add people page
+document.addEventListener("DOMContentLoaded", async () => {
+    if (!location.pathname.match(/\/courses(.*)\/users/)) return;
+
+    const observer = new MutationObserver(async (mutationsList) => {
+        const menuOpenMutation = mutationsList.some((mutation) => mutation.attributeName === "aria-expanded");
+
+        if (!menuOpenMutation) {
+            return;
+        }
+
+        const { target: hiddenInput } = mutationsList[0];
+
+        if (!hiddenInput || !(hiddenInput instanceof HTMLElement)) {
+            throw new Error("Hidden input not found");
+        }
+
+        const menuOpen = hiddenInput.getAttribute("aria-expanded") === "true";
+
+        if (!menuOpen) {
+            return;
+        }
+
+        const listId = hiddenInput.getAttribute("aria-controls");
+
+        if (!listId) {
+            return;
+        }
+
+        const teacherOption = await pollForEl(`#${listId} [value="4"]`);
+
+        teacherOption.remove();
+    });
+
+    const addPeopleBtn = await pollForEl("#addUsers");
+
+    addPeopleBtn.addEventListener("click", async () => {
+        let selector = "label[for='peoplesearch_select_role'] [data-position-target]";
+
+        const roleSelectSpan = await pollForEl(selector);
+
+        const { positionTarget = null } = roleSelectSpan.dataset;
+
+        if (!positionTarget) {
+            console.error("Role select span position target not found");
+            return;
+        }
+
+        selector += " input";
+
+        const hiddenInput = await pollForEl(selector);
+
+        observer.observe(hiddenInput, { attributes: true });
+
+        const closeBtn = await pollForEl("#add_people_modal span[class$='-closeButton'] > button");
+
+        closeBtn.addEventListener("click", () => {
+            observer.disconnect();
+        });
+    });
+});
