@@ -8,7 +8,7 @@
 #tswcssbuttons {
 	width: 180px ;
 	max-width: 100% ;
-	text-align: center ;
+	text-align: middle ;
 }
 #tswcssbuttons ul {
 	margin: 0 ;
@@ -34,8 +34,15 @@
 }
 #tswcssbuttons li a:hover {
 	color: #ffffff ;
-	background-color: rgb(0, 38, 255) ;
-    border-color: rgb(0, 255, 42);
+	background-color: #e74c3c; /* A modern, softer red */
+    border-color: #c0392b; /* A darker shade for the border */
     transform: scale(1.05);
+}
+
+#tswcssbuttons li.active a {
+	color: #ffffff ;
+	background-color: #e74c3c; /* Match the hover state */
+    border-color: #c0392b; /* Match the hover state */
+    font-weight: bold;
 }
     

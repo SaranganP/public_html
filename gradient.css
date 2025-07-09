@@ -1,0 +1,54 @@
+/* General Body Styles */
+body {
+    /* A nice blue -> purple -> red gradient */
+    background: linear-gradient(to right, #2c3e50, #20bae0, #c0392b);
+    color: #FFFFFF; /* White text for better readability on a dark background */
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+    margin: 0;
+    padding: 20px;
+    line-height: 1.6;
+}
+
+/* Link Styles */
+a {
+    color: #a9d7e8; /* Light blue for links */
+    text-decoration: none;
+}
+
+a:hover {
+    color: #FFFFFF;
+    text-decoration: underline;
+}
+
+/* Main container */
+#tswcontainer {
+    /* Making this semi-transparent to see the gradient through it */
+    background-color: rgba(0, 0, 0, 0.5); 
+    border: 1px solid #FFFFFF;
+    border-radius: 10px;
+    margin: 0 auto;
+    width: 90%;
+    max-width: 960px;
+    overflow: hidden; /* To contain the floated children */
+}
+
+/* Header */
+#tswheader {
+    padding: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+    text-align: center;
+}
+
+#tswheader p {
+    margin: 0;
+    font-size: 1.2em;
+}
+
+/* Content Area */
+#tswcontent {
+    float: left;
+    width: 65%; /* Adjust as needed */
+    box-sizing: border-box;
+}
+
+#tswcontproper {
