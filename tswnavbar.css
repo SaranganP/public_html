@@ -23,9 +23,9 @@
 	font-family: 'Courier New', Courier, monospace, Helvetica, sans-serif ;
 }
 #tswcssbuttons li a {
-	color: #333 ;
-	background-color: #f2f4f4 ;
-	border: 1px solid #ccc ;
+	color: #a0aec0;
+	background-color: transparent;
+	border: 1px solid #4a5568;
     border-radius: 8px;
     padding: 10px 15px;
     transition: all 0.2s ease-in-out;
@@ -33,16 +33,16 @@
 	display: block ;
 }
 #tswcssbuttons li a:hover {
-	color: #ffffff ;
-	background-color: #e74c3c; /* A modern, softer red */
-    border-color: #c0392b; /* A darker shade for the border */
+	color: #ffffff;
+	background-color: #4299e1; /* Game's accent blue */
+    border-color: #4299e1; /* A darker shade for the border */
     transform: scale(1.05);
 }
 
 #tswcssbuttons li.active a {
-	color: #ffffff ;
-	background-color: #e74c3c; /* Match the hover state */
-    border-color: #c0392b; /* Match the hover state */
+	color: #ffffff;
+	background-color: #4299e1; /* Match the hover state */
+    border-color: #4299e1; /* Match the hover state */
     font-weight: bold;
 }
     

@@ -1,5 +1,110 @@
 body {
-    font-family: Arial, Helvetica, sans-serif;
+    font-family: 'Poppins', sans-serif;
+    background-color: #1a202c; /* Fallback for older browsers */
+    background-image: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+    color: #e2e8f0;
+    /* Use flexbox to center the game board and other content */
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Horizontally center */
+    justify-content: center; /* Vertically center */
+    min-height: 100vh; /* Ensure the body takes up the full screen height */
+    margin: 0; /* Remove default body margin */
+}
+
+/* Timer styling */
+#timer-container {
+    position: fixed;
+    top: 15px;
+    right: 20px;
+    font-size: 1.5em;
+    font-family: 'Courier New', Courier, monospace;
+    color: #e2e8f0;
+    background-color: rgba(45, 55, 72, 0.5); /* Semi-transparent dark background */
+    backdrop-filter: blur(10px); /* Frosted glass effect */
+    padding: 5px 15px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.back-to-website-btn {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 100; /* Make sure it's on top of other elements */
+    padding: 8px 20px;
+    font-size: 1em;
+    cursor: pointer;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background-color: rgba(45, 55, 72, 0.5);
+    color: #e2e8f0;
+    border-radius: 8px;
+    transition: all 0.2s ease-in-out;
+    text-decoration: none; /* Remove underline from links */
+}
+
+.back-to-website-btn:hover {
+    background-color: #4a5568;
+    border-color: #a0aec0;
+}
+
+.difficulty-controls {
+    position: fixed;
+    top: 120px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background-color: rgba(45, 55, 72, 0.5); /* Semi-transparent dark background */
+    backdrop-filter: blur(10px); /* Frosted glass effect */
+    padding: 15px;
+    border-radius: 8px;
+    align-items: center;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.board-btn {
+    padding: 8px 20px;
+    font-size: 1em;
+    cursor: pointer;
+    border: 1px solid #4a5568;
+    background-color: transparent;
+    color: #a0aec0;
+    border-radius: 8px;
+    transition: all 0.2s ease-in-out;
+    width: 100px;
+    text-decoration: none; /* Remove underline from links */
+    box-sizing: border-box; /* Ensure padding and border are included in the width */
+}
+
+.board-btn.active, .board-btn:hover {
+    background-color: #4299e1;
+    border-color: #4299e1;
+    color: #ffffff;
+}
+
+#word-bank-container {
+    position: fixed;
+    top: 280px;
+    right: 20px;
+    width: 150px;
+    box-sizing: border-box;
+    background-color: rgba(45, 55, 72, 0.5); /* Semi-transparent dark background */
+    backdrop-filter: blur(10px); /* Frosted glass effect */
+    padding: 15px;
+    border-radius: 8px; /* This creates the curved box */
+    color: #e2e8f0;
+    font-size: 14px;
+    line-height: 1.4;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#word-bank-container h4 {
+    margin: 0 0 10px 0;
+    padding-bottom: 5px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    text-align: center;
+    font-size: 16px;
 }
 
 .header {
@@ -9,6 +114,12 @@ body {
     width: 50%;
 }
 
+h1 {
+    font-size: 2.5em;
+    text-align: center;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
 .cell-holder {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
@@ -16,22 +127,110 @@ body {
     width: 50%;
     aspect-ratio: 1/1;
     gap: 8px;
+    padding: 10px;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
 }
 
 .cell {
     display: flex;
     justify-content: center;
     align-items: center;
-    background-color: rgb(32, 32, 32);
-    color: rgb(115, 224, 13);
+    background-color: #2d3748;
+    color: #a0aec0;
     font-size: larger;
     overflow-wrap: anywhere;
+    border-radius: 8px; /* This will make the corners rounded */
+    cursor: pointer; /* Changes the cursor to a pointer on hover */
+    transition: all 0.1s ease-in-out; /* Smooth transition for selection */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) inset;
 }
 
 .cell.selected {
-    border: yellow solid 8px;
+    border: 4px solid #4299e1;
+    color: #ffffff;
+    transform: scale(1.05); /* Makes the selected cell slightly larger */
+}
+
+.win-animation {
+    display: none; /* Hidden by default */
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 2000; /* Make sure it's on top of everything */
+    border-radius: 15px;
+    box-shadow: 0 0 30px rgba(0, 255, 255, 0.7);
+    max-width: 80vw;
+    max-height: 80vh;
+    pointer-events: none; /* So it doesn't block clicks */
 }
 
 .no-margin {
     margin: 0 0;
 }
+
+.word-found {
+    text-decoration: line-through;
+    opacity: 0.6;
+    transition: all 0.3s ease-in-out;
+}
+body {
+    font-family: sans-serif;
+    display: grid;
+    height: 100vh;
+    place-items: center;
+  }
+  
+  .base-timer {
+    position: relative;
+    width: 300px;
+    height: 300px;
+  }
+  
+  .base-timer__svg {
+    transform: scaleX(-1);
+  }
+  
+  .base-timer__circle {
+    fill: none;
+    stroke: none;
+  }
+  
+  .base-timer__path-elapsed {
+    stroke-width: 7px;
+    stroke: grey;
+  }
+  
+  .base-timer__path-remaining {
+    stroke-width: 7px;
+    stroke-linecap: round;
+    transform: rotate(90deg);
+    transform-origin: center;
+    transition: 1s linear all;
+    fill-rule: nonzero;
+    stroke: currentColor;
+  }
+  
+  .base-timer__path-remaining.green {
+    color: rgb(65, 184, 131);
+  }
+  
+  .base-timer__path-remaining.orange {
+    color: orange;
+  }
+  
+  .base-timer__path-remaining.red {
+    color: red;
+  }
+  
+  .base-timer__label {
+    position: absolute;
+    width: 300px;
+    height: 300px;
+    top: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 48px;
+  }
