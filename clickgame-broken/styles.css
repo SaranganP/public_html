@@ -173,3 +173,47 @@ body {
         width: 0%;
     }
 }
+
+/* Style for the "back to website" button */
+.back-to-website-btn {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    background-color: #f0e68c; /* Khaki color from score */
+    color: #2a3a2b; /* Dark green from background */
+    padding: 0.5rem 1rem;
+    border-radius: 5px;
+    text-decoration: none;
+    font-weight: bold;
+    box-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    transition: all 0.2s ease-in-out;
+    z-index: 10; /* Ensure it's on top of other elements */
+}
+
+.back-to-website-btn:hover {
+    background-color: #fffacd; /* Lighter khaki for hover */
+    transform: translateY(-2px);
+}
+
+/* Style for the reset button */
+.reset-btn {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background-color: #c43c35; /* A danger/reset color */
+    color: #fff;
+    padding: 0.5rem 1rem;
+    border-radius: 5px;
+    border: none;
+    text-decoration: none;
+    font-weight: bold;
+    box-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    transition: all 0.2s ease-in-out;
+    z-index: 10;
+    cursor: pointer;
+}
+
+.reset-btn:hover {
+    background-color: #a4100c; /* Darker red on hover */
+    transform: translateY(-2px);
+}

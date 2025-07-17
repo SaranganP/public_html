@@ -4,9 +4,11 @@
 */
 body {
 	font-family: 'Poppins', sans-serif;
-	background-color: #1a202c; /* Fallback for older browsers */
-    background-image: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
-	color: #e2e8f0; /* Default text color for better readability */
+	background-color: #000000; /* Fallback for older browsers */
+    background-image: url("images/black\ background.avif");
+    background-repeat: no-repeat;
+    background-size: cover;
+	color: #E0E0E0; /* Default text color for better readability */
 }
 img {
 	max-width: 100% ;
@@ -22,14 +24,14 @@ meter, progress, output {
 div#tswsidecol {
 	float: right ;
 	width: 20% ;
-	color: #e2e8f0; /* Light text for dark background */
+	color: #E0E0E0; /* Light text for dark background */
 	background-color: transparent; /* A modern dark slate blue */
 }
 div#tswcontent {
 	float: right ;
 	width: 80% ;
-	color: #333; /* Dark text for light background */
-	background-color: #ffffff; /* White content area for clean reading */
+	color: #E0E0E0; /* Dark text for light background */
+	background-color: #1E1E1E; /* White content area for clean reading */
 }
 @media only screen and (max-width: 629px) {
 	div#tswsidecol {
@@ -45,9 +47,9 @@ div#tswcontproper {
 	padding: 20px;
 }
 div#tswcontainer {
-	background-color: rgba(45, 55, 72, 0.5); /* Semi-transparent dark background */
+	background-color: rgba(10, 10, 10, 0.7); /* Semi-transparent dark background */
     backdrop-filter: blur(10px); /* Frosted glass effect */
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 215, 0, 0.2);
 	margin: 20px auto; /* Center the container on the page */
 	max-width: 1200px; /* Set a max-width for larger screens */
 	border-radius: 8px; /* Rounded corners for the main container */
@@ -57,16 +59,16 @@ div#tswsideproper, div#tswothersideproper {
 	padding: 20px;
 }
 div#tswheader {
-	color: #e2e8f0; /* Light text for dark background */
-	background-color: rgba(26, 32, 44, 0.7); /* A modern dark blue */
+	color: #E0E0E0; /* Light text for dark background */
+	background-color: rgba(0, 0, 0, 0.5); /* A modern dark blue */
 	padding: 20px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid rgba(255, 215, 0, 0.2);
 }
 div#tswfooter {
-	color: #e2e8f0; /* Light text for dark background */
-	background-color: rgba(26, 32, 44, 0.7); /* Match the header */
+	color: #E0E0E0; /* Light text for dark background */
+	background-color: rgba(0, 0, 0, 0.5); /* Match the header */
 	padding: 20px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: 1px solid rgba(255, 215, 0, 0.2);
 }
 .images {
     width: 200px;
@@ -77,12 +79,46 @@ div#tswfooter {
 div#tswheader a,
 div#tswfooter a,
 div#tswcontent a {
-    color: #4299e1; /* A bright accent color for links */
+    color: #FFD700; /* A bright accent color for links */
     text-decoration: none;
 }
 div#tswheader a:hover,
 div#tswfooter a:hover,
 div#tswcontent a:hover {
-    color: #63b3ed; /* A darker shade for hover */
+    color: #FFFACD; /* A darker shade for hover */
     text-decoration: underline;
+}
+* {
+padding: 0;
+margin: 0;
+font-family:monospace;
+}
+ul {
+list-style-type: none;
+}
+ul li {
+display: inline-block;
+position: relative;
+}
+ul li a {
+display: block;
+padding :20 px 25 px;
+text-decoration: none;
+text-align: center;
+font-size: 20px;
+}
+ul li ul.dropdown li {
+	display: block;
+}
+ul li ul.dropdown    {
+width: 100%;
+position: absolute;
+z-index: 999;
+display:none;
+}
+ul li a:hover {
+	background: #112C66;
+}
+ul li:hover ul.dropdown {
+	display: block;
 }
